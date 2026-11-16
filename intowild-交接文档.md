@@ -1,6 +1,6 @@
-# intowild 户外社 站点交接文档
+# intowild户外社 站点交接文档
 
-**现状**：本地可运行、可构建，**尚未上线**。这是一个 Vite + React（TypeScript）的多页站点，源码准备放在 GitHub，Cloudflare 监听仓库、自动构建并部署，推送后 1–2 分钟生效（实测也可能延迟几十分钟）。日常只需要改源码、提交、推送。
+**现状**：本地可运行、可构建，**尚未上线**。这是一个 Vite + React（TypeScript）的单页站点，源码准备放在 GitHub，Cloudflare 监听仓库、自动构建并部署，推送后 1–2 分钟生效（实测也可能延迟几十分钟）。日常只需要改源码、提交、推送。
 
 > 本文记录的是这个站点从本地到上线的搭建与维护方式。动手前先执行 `ls` 和 `git log --oneline -5` 核对工作区，以文件系统里的实际内容为准。
 
@@ -13,7 +13,7 @@
 | 托管 | Cloudflare Workers（Static Assets） |
 | 项目名 | `intowild-site` |
 | 本地路径 | `C:\Users\tong7\Documents\intowild-site` |
-| 代码仓库 | `<待创建>`，分支 `main` |
+| 代码仓库 | `git@github.com:<你的用户名>/intowild-site.git`，分支 `main` |
 | 线上地址 | `https://intowild.online`（`www.intowild.online` 301 跳主域） |
 
 部署参数：构建命令 `npm run build`，部署命令 `npx wrangler deploy`，静态产物目录 `./dist`（由 `wrangler.jsonc` 的 `assets.directory` 指定）。
@@ -22,28 +22,26 @@ Node 装在 `C:\node`（v24.22.1），PATH 里可能没有，所以 `start-dev.c
 
 ## 2. 页面构成
 
-| 页面 | 文件 | 内容 |
-| --- | --- | --- |
-| 首页 | `index.html` / `src/App.tsx` | 社团名 + 一句话定位、下一次出发的路线卡、三个入口卡、关于摘要 |
-| 活动 | `activities.html` | 本学期活动列表（日期/名称/地点/强度/状态）、活动须知三条 |
-| 图集 | `gallery.html` | 6 格照片墙，按地点和时间归档 |
-| 关于 | `about.html` | 我们是谁 / 我们做什么 / 谁在组织 / 怎么联系 |
-| 加入 | `join.html` | 三步加入、报名表入口、常见问题 |
-| 404 | `404.html` | 走错路时的兜底页 |
+只有一个主页，整屏黑底：
 
-每个页面在 `vite.config.ts` 的 `build.rollupOptions.input` 里登记，新增页面必须同时登记，否则不会被构建。
+1. 顶栏：左侧 `■ intowild`，右侧 `intowild.online`
+2. 主区：小标题 `OUTDOOR CLUB · <所属学校/城市>` → 大标题 `intowild / 户外社` → 一句话定位
+3. 底栏：`© 年份 intowild户外社`，右侧构建信息
+
+另有一个 **404 兜底页** `public/404.html`，纯静态、不在任何导航里，只有访问不存在的路径时才会出现。
 
 ## 3. 改什么文件
 
 | 想改什么 | 改哪个文件 |
 | --- | --- |
-| 社团简介、联系方式、活动列表、图集、招新流程、FAQ | `src/content.ts` |
-| 首页结构 | `src/App.tsx` |
-| 配色、字号、间距、响应式 | `src/index.css`、`src/pages.css` |
-| 浏览器标签标题与 meta | 对应页面的 `.html` |
-| 图片等静态资源 | `public/`（照片放 `public/photos/`） |
+| 社团名、所属学校/城市、一句话定位 | `src/App.tsx` 顶部的 `SITE` |
+| 版式、字号、间距 | `src/index.css` |
+| 配色 | `src/index.css` 的 `:root` 变量 |
+| 浏览器标签标题与分享卡片 | `index.html` |
+| 404 页 | `public/404.html` |
 | 安全头与缓存策略 | `public/_headers` |
-| 站点名、导航项 | `src/components/Layout.tsx` |
+| www 跳转、响应头 | `worker/index.ts` |
+| 域名 | `wrangler.jsonc` 的 `routes` + `worker/index.ts` 的 `APEX` + 各处的 `canonical` |
 
 `dist/` 是构建产物，不要手改。
 
@@ -70,13 +68,13 @@ Node 装在 `C:\node`（v24.22.1），PATH 里可能没有，所以 `start-dev.c
    ```bash
    cd "C:\Users\tong7\Documents\intowild-site"
    git add -A
-   git commit -m "content: 更新 11 月活动"
+   git commit -m "content: 更新一句话定位"
    git push
    ```
 
 5. 等自动构建，1–2 分钟。进度看 **Cloudflare → Workers & Pages → Workers → `intowild-site` → Deployments**。
 
-6. 打开线上地址，按 `Ctrl + Shift + R` 强刷，确认新内容已经上线。也可以直接用命令确认：
+6. 打开 `https://intowild.online`，按 `Ctrl + Shift + R` 强刷确认。也可以用命令：
 
    ```bash
    curl -s -o /dev/null -w "%{http_code}\n" https://intowild.online/
@@ -94,7 +92,7 @@ git remote add origin git@github.com:<你的用户名>/intowild-site.git
 git push -u origin main
 ```
 
-### 5.2 先手动部署一次，确认产物没问题
+### 5.2 登录 Cloudflare 并手动部署一次
 
 ```bash
 cd "C:\Users\tong7\Documents\intowild-site"
@@ -105,6 +103,8 @@ npx wrangler deploy
 
 成功后终端会给出 `https://intowild-site.<你的账号>.workers.dev`，先在这个地址验收。
 `wrangler.jsonc` 里 `workers_dev: true`，所以每次部署都会更新这个测试地址。
+
+> 第一次 deploy 时如果 `intowild.online` 还没接进 Cloudflare，会报找不到 zone。先做 5.4，或临时把 `routes` 注释掉再部署。
 
 ### 5.3 接 GitHub 自动构建
 
@@ -136,7 +136,7 @@ npm run build
 npx wrangler deploy
 ```
 
-Cloudflare 会自动创建 CNAME 并签发证书，状态在 **Settings → Domains & Routes** 里看，变 **Active** 即可。zone 还没 Active 时 deploy 会报错，先把上一步做完。
+Cloudflare 会自动创建 CNAME 并签发证书，状态在 **Settings → Domains & Routes** 里看，变 **Active** 即可。
 
 > 也可以在面板里手动 Add custom domain，效果一样。
 
@@ -159,9 +159,10 @@ Cloudflare 会自动创建 CNAME 并签发证书，状态在 **Settings → Doma
 curl -I https://intowild.online/            # 200
 curl -I http://intowild.online/             # 301 → https
 curl -I https://www.intowild.online/        # 301 → 主域
+curl -I https://intowild.online/no-such     # 404，且是自定义 404 页
 ```
 
-再手动过一遍：手机 4G 打开、五个页面都能点通、404 页正常、照片能显示。
+再手动过一遍：手机 4G 打开，黑底、标题 `intowild户外社`、无横向滚动。
 
 ## 6. 构建失败与回滚
 
@@ -172,7 +173,7 @@ curl -I https://www.intowild.online/        # 301 → 主域
 | 新版本有问题 | 需要撤回 | Deployments 里选一个此前的成功版本执行回滚 |
 | 想从代码层面撤回 | 改动已提交 | `git revert <commit>` 后重新 `git push` |
 
-本地构建失败最常见的原因：TypeScript 报错（`tsc --noEmit` 会拦住）、文件名大小写不一致、某个页面没在 `vite.config.ts` 里登记。
+本地构建失败最常见的原因：TypeScript 报错（`tsc --noEmit` 会拦住）、文件名大小写不一致。
 
 ## 7. 不要改动的地方
 
@@ -180,6 +181,7 @@ curl -I https://www.intowild.online/        # 301 → 主域
 - `node_modules/`：依赖目录，不要手工编辑。
 - Cloudflare 面板里的在线代码编辑器：改了不会进入 Git，下次部署会被覆盖。
 - `public/_headers` 的语法：每条规则是「路径」+ 缩进两空格的「头名: 值」，缩进错了整条不生效。
+- `wrangler.jsonc` 的 `html_handling: "none"`：去掉后 `.html` 地址会被 307 跳转。
 
 ## 8. 接手验收
 

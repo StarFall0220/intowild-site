@@ -1,6 +1,6 @@
 # intowild-site
 
-intowild 户外社官网（`https://intowild.online`）。**Vite + React + TypeScript** 多页站点，部署在 **Cloudflare Workers（Static Assets）**。
+intowild户外社 官网（`https://intowild.online`）。**Vite + React + TypeScript** 单页站点，部署在 **Cloudflare Workers（Static Assets）**。
 
 > 注意：这里是 Workers + Static Assets，**不是 Cloudflare Pages**。
 > 面板里在 **Workers & Pages → Workers** 标签下找 `intowild-site`，Pages 标签下是空的。
@@ -18,23 +18,13 @@ npm run build   # 生产构建，产物在 dist/
 ## 目录说明
 
 ```
-index.html / activities.html / gallery.html / about.html / join.html / 404.html
-                            每个页面一个 html 外壳，<title>、meta 写在这里
-src/main.tsx                首页入口：只负责挂载 App
-src/App.tsx                 首页
-src/activities.tsx          活动页（含自己的挂载代码）
-src/gallery.tsx             图集页
-src/about.tsx               关于页
-src/join.tsx                加入页
-src/notfound.tsx            404 页
-src/content.ts              ★ 全站文案与数据都在这里，改内容先看它
-src/components/Layout.tsx   页头 + 页脚 + 导航
-src/components/PageHead.tsx 内页抬头（编号 + 标题 + 导语）
-src/components/Todo.tsx     占位标记 <Todo>，以及自动识别的 <Ph>
-src/index.css               全局：配色变量、页头页脚、按钮
-src/pages.css               各页面专用样式
-public/                     原样拷进 dist：favicon、_headers、robots.txt、照片
-worker/index.ts             Worker 入口：把请求交给静态资源 + 补安全头
+index.html                  页面外壳：<title>、meta、canonical 都在这
+src/main.tsx                React 挂载入口，一般不用动
+src/App.tsx                 ★ 整个首页：文案常量 SITE 在文件顶部，下面是版式
+src/components/Todo.tsx     占位标记 <Todo>
+src/index.css               全部样式：配色变量在最上面
+public/                     原样拷进 dist：favicon、_headers、robots.txt、sitemap.xml、404.html
+worker/index.ts             Worker 入口：www 跳主域 + 交给静态资源 + 补安全头
 dist/                       构建产物，自动生成，不要手改
 ```
 
@@ -42,20 +32,22 @@ dist/                       构建产物，自动生成，不要手改
 
 | 想改什么 | 改哪里 |
 | --- | --- |
-| 社团简介、联系方式、活动列表、图集、招新流程、FAQ | `src/content.ts` |
-| 首页结构 | `src/App.tsx` |
-| 浏览器标签页标题、分享卡片 | 对应页面的 `.html` 里的 `<title>` / `og:` |
-| 配色、字号、间距 | `src/index.css` 顶部的 CSS 变量 |
-| 某个页面的版式 | `src/pages.css` |
-| 新增一个页面 | 新建 `xxx.html` + `src/xxx.tsx`（照抄 `activities.tsx` 的挂载写法）+ 在 `vite.config.ts` 的 `input` 里加一行 + 在 `Layout.tsx` 的 `NAV` 里加一项 |
+| 社团名、所属学校/城市、一句话定位 | `src/App.tsx` 顶部的 `SITE` |
+| 版式、字号、间距 | `src/index.css` |
+| 配色 | `src/index.css` 的 `:root` 变量 |
+| 浏览器标签标题、分享卡片 | `index.html` 的 `<title>` / `og:` |
+| 404 页 | `public/404.html`（纯静态，不走 React） |
 
 ## 占位怎么填
 
-页面上所有橙色虚线框都是占位，来自 `src/content.ts` 里带尖括号的字符串（如 `<联系邮箱>`）。
+页面上的橙色虚线框来自 `src/App.tsx` 的 `SITE`：
 
-- 改 `content.ts` 里的字符串，把 `<...>` 换成真实内容，尖括号删掉；
-- 页面会自动从橙色框变成普通文字（`<Ph>` 的判定逻辑在 `src/components/Todo.tsx`）；
-- 少量直接写在页面里的占位用 `<Todo>...</Todo>` 包着，改完替换成普通文字即可。
+```ts
+org: '<所属学校 / 城市>',
+tagline: '<一句话定位：我们带谁去哪里>',
+```
+
+把 `<...>` 换成真实内容、删掉尖括号即可，页面上会自动变成普通文字。
 
 ## 部署流程
 
@@ -75,8 +67,7 @@ npx wrangler deploy
 
 查看部署记录：`npx wrangler deployments list --name intowild-site`
 
-## 上线前必须补的
+## 两个容易踩的点
 
-1. `src/content.ts` 里所有 `<...>` 占位
-2. `wrangler.jsonc` 里取消注释 `routes`，填真实域名
-3. 照片放进 `public/photos/`，在 `content.ts` 的 `photos` 里填 `src`
+- `wrangler.jsonc` 里 `html_handling: "none"` 是故意的：默认行为会把 `/xxx.html` 307 跳到 `/xxx`，多页站点每点一次多一跳。
+- `www.intowild.online` 的 301 在 `worker/index.ts` 里做，**不要**再在 Cloudflare 面板配 Redirect Rule，否则会重复跳转。
