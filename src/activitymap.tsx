@@ -227,7 +227,6 @@ export function ActivityMap() {
 
       <div className="map-head">
         <h1 className="map-title">活动地图</h1>
-        <p className="map-lead">滚轮或双指缩放，拖动查看；点星标看小图，再点开大图。</p>
       </div>
 
       <div className="map-stage" ref={areaRef}>
