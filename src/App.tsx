@@ -50,7 +50,6 @@ export default function App() {
         <span>
           © {new Date().getFullYear()} {SITE.name}
         </span>
-        <span>Vite · React · Cloudflare Workers</span>
       </footer>
 
       {/* 浮动入口：固定在右下角，跳转到活动地图子域名 */}

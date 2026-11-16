@@ -28,7 +28,7 @@ Node 装在 `C:\node`（v24.22.1），PATH 里可能没有，所以 `start-dev.c
 
 1. 顶栏：左侧 `■ intowild`，右侧 `intowild.online`
 2. 主区：小标题 `OUTDOOR CLUB · 上海` → 大标题 `intowild / 户外社` → 一句话定位 `Into the wild, out of the ordinary.`
-3. 底栏：`© 年份 intowild户外社`，右侧构建信息
+3. 底栏：一行 `© 年份 intowild户外社`
 4. 右下角固定一个 `活动地图 ↗` 浮动按钮，跳 `https://activitymap.intowild.online`
 
 另有两个非主页面的入口：
