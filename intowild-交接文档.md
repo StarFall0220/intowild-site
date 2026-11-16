@@ -26,7 +26,7 @@ Node 装在 `C:\node`（v24.22.1），PATH 里可能没有，所以 `start-dev.c
 只有一个主页，整屏黑底：
 
 1. 顶栏：左侧 `■ intowild`，右侧 `intowild.online`
-2. 主区：小标题 `OUTDOOR CLUB · <所属学校/城市>` → 大标题 `intowild / 户外社` → 一句话定位
+2. 主区：小标题 `OUTDOOR CLUB · 上海` → 大标题 `intowild / 户外社` → 一句话定位 `Into the wild, out of the ordinary.`
 3. 底栏：`© 年份 intowild户外社`，右侧构建信息
 
 另有一个 **404 兜底页** `public/404.html`，纯静态、不在任何导航里，只有访问不存在的路径时才会出现。

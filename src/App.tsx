@@ -1,17 +1,23 @@
+import type { ReactNode } from 'react'
 import { Todo } from './components/Todo'
 import './index.css'
 
 /**
- * 单页站点。要改文案，直接改下面这 4 个常量；
- * 带尖括号的是占位，换成真实内容时把尖括号一起删掉。
+ * 单页站点。要改文案，只改下面这 4 个常量。
+ * 值以 < 开头会渲染成橙色占位框；填成正常文字就自动变成普通文本。
  */
 const SITE = {
   name: 'intowild户外社',
   en: 'intowild',
   /** 所属学校 / 城市 */
-  org: '<所属学校 / 城市>',
-  /** 一句话定位，20–40 字 */
-  tagline: '<一句话定位：我们带谁去哪里>',
+  org: '上海',
+  /** 一句话定位 */
+  tagline: 'Into the wild, out of the ordinary.',
+}
+
+/** 以 < 开头视为未填的占位，其余按普通文字渲染 */
+function Ph({ value }: { value: string }): ReactNode {
+  return value.trim().startsWith('<') ? <Todo>{value}</Todo> : value
 }
 
 export default function App() {
@@ -27,7 +33,7 @@ export default function App() {
 
       <section className="stage">
         <p className="kicker">
-          OUTDOOR CLUB · <Todo>{SITE.org}</Todo>
+          OUTDOOR CLUB · <Ph value={SITE.org} />
         </p>
 
         <h1 className="title">
@@ -36,7 +42,7 @@ export default function App() {
         </h1>
 
         <p className="lead">
-          <Todo>{SITE.tagline}</Todo>
+          <Ph value={SITE.tagline} />
         </p>
       </section>
 
