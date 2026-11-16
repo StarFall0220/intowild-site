@@ -9,6 +9,8 @@
   gap: clamp(10px, 1.6vw, 18px);
   padding: clamp(12px, 2.4vw, 26px) clamp(14px, 4vw, 40px) clamp(12px, 2.4vw, 26px);
   overflow: hidden;
+  /* 手机上捏合/拖拽时不要触发页面回弹或整体滚动 */
+  overscroll-behavior: none;
 }
 
 /* ---------- 顶栏 ---------- */
@@ -74,9 +76,12 @@
   border: 1px solid var(--line);
   background: #000;
   cursor: grab;
+  /* 关掉浏览器对这块区域的所有默认手势：滚动、双击放大、长按选择 */
   touch-action: none;
+  overscroll-behavior: contain;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .map-canvas:active {

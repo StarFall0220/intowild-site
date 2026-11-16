@@ -11,6 +11,12 @@ const THUMB_GAP = 14
 const STAR_HALF = 10
 const EDGE = 8
 
+/** 位移阈值：手指比鼠标抖，阈值放宽，避免轻点被当成拖动 */
+const TAP_SLOP_TOUCH = 10
+const TAP_SLOP_MOUSE = 6
+/** 星标命中半径：44×44 的点击区，半径 30 才能覆盖到边缘 */
+const HIT_RADIUS = 30
+
 interface View {
   x: number
   y: number
@@ -33,7 +39,7 @@ export function ActivityMap() {
 
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null)
-  const pinch = useRef<{ d: number; s: number; x: number; y: number; cx: number; cy: number } | null>(null)
+  const pinch = useRef<{ d: number; s: number; x: number; y: number; ax: number; ay: number } | null>(null)
   const moved = useRef(0)
   /** 拖拽结束后紧跟的那一次 click 要吞掉，避免拖完误触发星标 */
   const suppressClick = useRef(false)
@@ -41,6 +47,12 @@ export function ActivityMap() {
   const pressId = useRef<string | null>(null)
   /** 这次按下是否落在缩略图上 */
   const pressThumb = useRef(false)
+  /** 这次手势的指针类型：touch 的位移阈值更宽 */
+  const pointerKind = useRef<string>('mouse')
+  /** 缩略图元素，命中判定按几何算，不依赖事件 target */
+  const thumbRef = useRef<HTMLButtonElement>(null)
+  /** 上一次「出缩略图」的时间，用来吃掉 touch 后紧跟的合成 click */
+  const lastActivate = useRef(0)
 
   // 量的是外层可用区域，画布按地图比例收缩，避免上下大片黑边
   useEffect(() => {
@@ -129,15 +141,76 @@ export function ActivityMap() {
     }
   }, [panel, active])
 
+  // 指针移动时用 rAF 合并成每帧一次 setState，避免高频 pointermove 拖慢渲染
+  const rafRef = useRef(0)
+  const queued = useRef<View | null>(null)
+  const scheduleView = useCallback((v: View) => {
+    queued.current = v
+    if (rafRef.current) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0
+      if (queued.current) setView(queued.current)
+    })
+  }, [])
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), [])
+
+  /** 命中最靠近手指的星标（重叠时选中心最近的，而不是 DOM 里最上层那个） */
+  const pickMarker = useCallback((x: number, y: number): string | null => {
+    const nodes = stageRef.current?.querySelectorAll<HTMLElement>('[data-marker]')
+    if (!nodes) return null
+    let best: string | null = null
+    let bestD = HIT_RADIUS
+    nodes.forEach((n) => {
+      const r = n.getBoundingClientRect()
+      const d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2))
+      if (d <= bestD) {
+        bestD = d
+        best = n.dataset.marker ?? null
+      }
+    })
+    return best
+  }, [])
+
   const onPointerDown = (e: React.PointerEvent) => {
-    const el = stageRef.current
-    if (!el) return
-    el.setPointerCapture(e.pointerId)
+    if (!stageRef.current) return
+    // 不做 setPointerCapture：捕获会把后续 click 吞到画布上，
+    // 导致缩略图/星标按钮收不到点击（触屏上尤其明显）
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     moved.current = 0
-    suppressClick.current = false
-    pressId.current = (e.target as HTMLElement).closest('[data-marker]')?.getAttribute('data-marker') ?? null
-    pressThumb.current = !!(e.target as HTMLElement).closest('.thumb')
+    pointerKind.current = e.pointerType
+
+    // 缩略图按几何命中：它在画布内，事件经过指针捕获后 target 不可靠
+    const tr = thumbRef.current?.getBoundingClientRect()
+    pressThumb.current = !!(
+      tr &&
+      e.clientX >= tr.left &&
+      e.clientX <= tr.right &&
+      e.clientY >= tr.top &&
+      e.clientY <= tr.bottom
+    )
+
+    // 两个手指落下时不判星标，避免捏合误触
+    pressId.current =
+      pointers.current.size === 1 ? (pressThumb.current ? null : pickMarker(e.clientX, e.clientY)) : null
+
+    if (pointers.current.size === 1) {
+      drag.current = { px: e.clientX, py: e.clientY, x: view.x, y: view.y }
+    } else if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()]
+      const r = stageRef.current.getBoundingClientRect()
+      const mx = (a.x + b.x) / 2
+      const my = (a.y + b.y) / 2
+      pinch.current = {
+        d: Math.hypot(a.x - b.x, a.y - b.y),
+        s: view.s,
+        x: view.x,
+        y: view.y,
+        // 两指中点相对画布中心的位置，作为缩放锚点
+        ax: mx - r.left - r.width / 2,
+        ay: my - r.top - r.height / 2,
+      }
+      drag.current = null
+    }
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -149,7 +222,7 @@ export function ActivityMap() {
       const dx = e.clientX - d.px
       const dy = e.clientY - d.py
       moved.current = Math.max(moved.current, Math.hypot(dx, dy))
-      setView((v) => clampView({ s: v.s, x: d.x + dx, y: d.y + dy }))
+      scheduleView(clampView({ s: view.s, x: d.x + dx, y: d.y + dy }))
     } else if (pointers.current.size === 2 && pinch.current) {
       const [a, b] = [...pointers.current.values()]
       const p = pinch.current
@@ -159,10 +232,11 @@ export function ActivityMap() {
       const el = stageRef.current
       if (!el) return
       const r = el.getBoundingClientRect()
-      const px = p.cx - r.left - r.width / 2
-      const py = p.cy - r.top - r.height / 2
+      // 以「当前两指中点」为锚：起始锚点下的图面内容，始终跟着当前中点走
+      const qx = (a.x + b.x) / 2 - r.left - r.width / 2
+      const qy = (a.y + b.y) / 2 - r.top - r.height / 2
       moved.current = 99
-      setView(clampView({ s: s2, x: px - (px - p.x) * k, y: py - (py - p.y) * k }))
+      scheduleView(clampView({ s: s2, x: qx - (p.ax - p.x) * k, y: qy - (p.ay - p.y) * k }))
     }
   }
 
@@ -171,18 +245,22 @@ export function ActivityMap() {
     if (pointers.current.size < 2) pinch.current = null
     if (pointers.current.size === 0) {
       drag.current = null
-      if (moved.current > 6) suppressClick.current = true
+      const slop = pointerKind.current === 'touch' ? TAP_SLOP_TOUCH : TAP_SLOP_MOUSE
+      if (moved.current > slop) suppressClick.current = true
 
-      if (moved.current <= 6) {
+      if (moved.current <= slop) {
         const id = pressId.current
         if (pressThumb.current && active) {
           // 点缩略图 = 第二步
           openPanel(active)
         } else if (id) {
           stageRef.current?.setAttribute('data-last-marker', id)
-          // 第一次点：出缩略图；再点同一处：开侧栏
-          if (active === id) openPanel(id)
-          else setActive(id)
+          // 第一次点：出缩略图；再点同一处：开侧栏（300ms 内视为同一次触摸的合成事件）
+          if (active === id && Date.now() - lastActivate.current > 300) openPanel(id)
+          else if (active !== id) {
+            setActive(id)
+            lastActivate.current = Date.now()
+          }
         } else if (active && !panel) {
           // 点空白收起缩略图
           setActive(null)
@@ -258,11 +336,9 @@ export function ActivityMap() {
                 className={m.id === active ? 'marker is-active' : 'marker'}
                 data-marker={m.id}
                 style={{ left: `${m.x}%`, top: `${m.y}%`, ['--inv' as string]: inv }}
-                onClick={() => {
-                  if (suppressClick.current) {
-                    suppressClick.current = false
-                    return
-                  }
+                onClick={(e) => {
+                  // 指针交互已在 pointerup 里处理；这里只接键盘（detail === 0）触发
+                  if (e.detail !== 0) return
                   if (active === m.id) openPanel(m.id)
                   else setActive(m.id)
                 }}
@@ -279,7 +355,9 @@ export function ActivityMap() {
 
           {thumb && active && (
             <button
+              ref={thumbRef}
               className="thumb"
+              onPointerDown={() => openPanel(active)}
               style={{ left: thumb.left, top: thumb.top, width: thumb.w, height: thumb.h }}
               onClick={(e) => {
                 e.stopPropagation()
@@ -319,7 +397,7 @@ export function ActivityMap() {
 
       <div
         className={panelId ? 'panel-backdrop is-open' : 'panel-backdrop'}
-        onClick={closePanel}
+        onPointerDown={closePanel}
         aria-hidden="true"
       />
 
