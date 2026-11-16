@@ -1,6 +1,6 @@
 # intowild户外社 站点交接文档
 
-**现状**：已在 Cloudflare Workers 上部署，测试地址 `https://intowild-site.2858367707.workers.dev` 可访问；自定义域 `intowild.online` **待接入**（卡在域名 zone 尚未添加进 Cloudflare 账号）。这是一个 Vite + React（TypeScript）的单页站点，源码在 GitHub（`StarFall0220/intowild-site`），Cloudflare 监听仓库、自动构建并部署，推送后 1–2 分钟生效（实测也可能延迟几十分钟）。日常只需要改源码、提交、推送。
+**现状**：**已上线**，`https://intowild.online` 可访问（`www` 301 跳主域）。Vite + React（TypeScript）单页站点，源码在 GitHub（`StarFall0220/intowild-site`），Cloudflare Workers 托管。日常只需要改源码、提交、推送，或本地 `npx wrangler deploy`。
 
 > 本文记录的是这个站点从本地到上线的搭建与维护方式。动手前先执行 `ls` 和 `git log --oneline -5` 核对工作区，以文件系统里的实际内容为准。
 
@@ -187,3 +187,19 @@ curl -I https://intowild.online/no-such     # 404，且是自定义 404 页
 ## 8. 接手验收
 
 按第 4 节完整执行一次「改一处文案 → `git push` → 等 1–2 分钟 → 强刷线上确认」，即视为环境正常。若构建记录没有出现，先确认本地分支是 `main`、远端是 `git@github.com:<你的用户名>/intowild-site.git`，以及 Cloudflare 的 Build 设置里生产分支填的是 `main`。
+
+## 9. 上线记录（2026-11-16）
+
+| 项 | 值 |
+| --- | --- |
+| Cloudflare zone ID | `cf450f9e453809e8f6e718404509a3d0` |
+| 分配到的 NS | `adrian.ns.cloudflare.com` / `bradley.ns.cloudflare.com` |
+| 自定义域 | `intowild.online`、`www.intowild.online`（均 `custom_domain: true`） |
+| 证书 | Universal SSL，自动签发 |
+
+上线过程中踩到并处理掉的两个坑，改了这里的东西前先读一遍：
+
+1. **DNSSEC 的 DS 记录不匹配会让整站 SERVFAIL。** Spaceship 默认给域名开了 DNSSEC 并自动发布 DS；一旦把 NS 指向 Cloudflare，注册局的 DS 仍指向 Spaceship 的密钥，所有带校验的解析器直接返回 SERVFAIL（表现为 `curl` 返回 `000`，看起来像"没部署好"）。处理办法是在 Spaceship 把 DNSSEC **禁用**，等 DS 从注册局消失。
+   > 以后若想重新开 DNSSEC：必须在 Cloudflare 侧开启，再把 Cloudflare 给出的 DS 记录加到 Spaceship。**不要只在一边开。**
+
+2. **自定义域会被已存在的 A 记录挡住。** 添加站点时 Cloudflare 会自动导入原注册商的停放 A 记录，`wrangler deploy` 会报 `Hostname 'intowild.online' already has externally managed DNS records ... [code: 100117]`。删掉那两条 A 记录后再部署即可。
