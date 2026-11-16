@@ -305,9 +305,8 @@ export function ActivityMap() {
 
       <div className="map-head">
         <h1 className="map-title">
-          绿野秘藏·
-          <br />
-          造境
+          绿野秘藏·造境
+          <span className="map-title-sub">活动地图🗺</span>
         </h1>
       </div>
 
