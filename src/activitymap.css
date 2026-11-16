@@ -61,11 +61,11 @@
   margin: 0;
 }
 
-/* 第二行「活动地图🗺」：单独成行，首行缩进两个字 */
+/* 第二行「活动地图🗺」：单独成行，在主标题宽度内居中 */
 .map-title-sub {
   display: block;
   margin-top: 0.28em;
-  text-indent: 2em;
+  text-align: center;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
