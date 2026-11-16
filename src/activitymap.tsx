@@ -304,7 +304,11 @@ export function ActivityMap() {
       </header>
 
       <div className="map-head">
-        <h1 className="map-title">活动地图</h1>
+        <h1 className="map-title">
+          绿野秘藏·
+          <br />
+          造境
+        </h1>
       </div>
 
       <div className="map-stage" ref={areaRef}>
