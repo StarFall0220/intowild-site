@@ -7,9 +7,7 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    // 多页站点用 /xxx.html 直链。默认的 auto-trailing-slash 会把 .html 307 跳到无后缀地址，
-    // 导航每次点击都多一跳，所以关掉它：html 原样返回，没有后缀的路径不会命中 html。
-    "html_handling": "none",
+    // 不要加 html_handling: "none"：那会把「/ → index.html」一起关掉，首页直接 404。
     "not_found_handling": "404-page",
     "run_worker_first": true
   },

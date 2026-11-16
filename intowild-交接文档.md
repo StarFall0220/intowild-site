@@ -1,6 +1,6 @@
 # intowild户外社 站点交接文档
 
-**现状**：本地可运行、可构建，**尚未上线**。这是一个 Vite + React（TypeScript）的单页站点，源码准备放在 GitHub，Cloudflare 监听仓库、自动构建并部署，推送后 1–2 分钟生效（实测也可能延迟几十分钟）。日常只需要改源码、提交、推送。
+**现状**：已在 Cloudflare Workers 上部署，测试地址 `https://intowild-site.2858367707.workers.dev` 可访问；自定义域 `intowild.online` **待接入**（卡在域名 zone 尚未添加进 Cloudflare 账号）。这是一个 Vite + React（TypeScript）的单页站点，源码在 GitHub（`StarFall0220/intowild-site`），Cloudflare 监听仓库、自动构建并部署，推送后 1–2 分钟生效（实测也可能延迟几十分钟）。日常只需要改源码、提交、推送。
 
 > 本文记录的是这个站点从本地到上线的搭建与维护方式。动手前先执行 `ls` 和 `git log --oneline -5` 核对工作区，以文件系统里的实际内容为准。
 
@@ -13,8 +13,9 @@
 | 托管 | Cloudflare Workers（Static Assets） |
 | 项目名 | `intowild-site` |
 | 本地路径 | `C:\Users\tong7\Documents\intowild-site` |
-| 代码仓库 | `git@github.com:<你的用户名>/intowild-site.git`，分支 `main` |
+| 代码仓库 | `git@github.com:StarFall0220/intowild-site.git`，分支 `main` |
 | 线上地址 | `https://intowild.online`（`www.intowild.online` 301 跳主域） |
+| 测试地址 | `https://intowild-site.2858367707.workers.dev`（`workers_dev: true`，每次部署都更新） |
 
 部署参数：构建命令 `npm run build`，部署命令 `npx wrangler deploy`，静态产物目录 `./dist`（由 `wrangler.jsonc` 的 `assets.directory` 指定）。
 
@@ -181,7 +182,7 @@ curl -I https://intowild.online/no-such     # 404，且是自定义 404 页
 - `node_modules/`：依赖目录，不要手工编辑。
 - Cloudflare 面板里的在线代码编辑器：改了不会进入 Git，下次部署会被覆盖。
 - `public/_headers` 的语法：每条规则是「路径」+ 缩进两空格的「头名: 值」，缩进错了整条不生效。
-- `wrangler.jsonc` 的 `html_handling: "none"`：去掉后 `.html` 地址会被 307 跳转。
+- `wrangler.jsonc` 的 `assets`：**不要**加 `html_handling: "none"`，实测会让首页 `/` 直接 404；默认值才对。
 
 ## 8. 接手验收
 

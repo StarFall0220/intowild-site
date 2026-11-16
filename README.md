@@ -69,5 +69,5 @@ npx wrangler deploy
 
 ## 两个容易踩的点
 
-- `wrangler.jsonc` 里 `html_handling: "none"` 是故意的：默认行为会把 `/xxx.html` 307 跳到 `/xxx`，多页站点每点一次多一跳。
+- **不要**给 `wrangler.jsonc` 加 `html_handling: "none"`：实测它会把「`/` → `index.html`」一起关掉，首页直接 404。默认值就是对的。
 - `www.intowild.online` 的 301 在 `worker/index.ts` 里做，**不要**再在 Cloudflare 面板配 Redirect Rule，否则会重复跳转。
