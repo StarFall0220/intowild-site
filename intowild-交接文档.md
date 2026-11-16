@@ -16,6 +16,7 @@
 | 代码仓库 | `git@github.com:StarFall0220/intowild-site.git`，分支 `main` |
 | 线上地址 | `https://intowild.online`（`www.intowild.online` 301 跳主域） |
 | 测试地址 | `https://intowild-site.2858367707.workers.dev`（`workers_dev: true`，每次部署都更新） |
+| 子域名 | `https://activitymap.intowild.online`（活动地图页，同一个 Worker 按 hostname 分流） |
 
 部署参数：构建命令 `npm run build`，部署命令 `npx wrangler deploy`，静态产物目录 `./dist`（由 `wrangler.jsonc` 的 `assets.directory` 指定）。
 
@@ -28,8 +29,12 @@ Node 装在 `C:\node`（v24.22.1），PATH 里可能没有，所以 `start-dev.c
 1. 顶栏：左侧 `■ intowild`，右侧 `intowild.online`
 2. 主区：小标题 `OUTDOOR CLUB · 上海` → 大标题 `intowild / 户外社` → 一句话定位 `Into the wild, out of the ordinary.`
 3. 底栏：`© 年份 intowild户外社`，右侧构建信息
+4. 右下角固定一个 `活动地图 ↗` 浮动按钮，跳 `https://activitymap.intowild.online`
 
-另有一个 **404 兜底页** `public/404.html`，纯静态、不在任何导航里，只有访问不存在的路径时才会出现。
+另有两个非主页面的入口：
+
+- **活动地图**：`activitymap.intowild.online` → 渲染 `dist/activitymap.html`（`src/activitymap.tsx`），当前是「地图待接入」的骨架页。
+- **404 兜底页**：`public/404.html`，纯静态、不在任何导航里，只有访问不存在的路径时才会出现。
 
 ## 3. 改什么文件
 
@@ -151,6 +156,7 @@ Cloudflare 会自动创建 CNAME 并签发证书，状态在 **Settings → Doma
 | --- | --- | --- | --- | --- |
 | CNAME | `intowild.online` | `intowild-site.<账号>.workers.dev` | 已代理（橙云） | 主站 |
 | CNAME | `www` | `intowild-site.<账号>.workers.dev` | 已代理（橙云） | 跳转源 |
+| CNAME | `activitymap` | `intowild-site.<账号>.workers.dev` | 已代理（橙云） | 活动地图子域 |
 
 域名不在 Cloudflare 时，只能在自己的 DNS 服务商加 `www CNAME intowild-site.<账号>.workers.dev`，apex 需要 ALIAS/ANAME，多数国内 DNS 不支持——所以建议直接把 NS 迁到 Cloudflare。
 
@@ -194,7 +200,7 @@ curl -I https://intowild.online/no-such     # 404，且是自定义 404 页
 | --- | --- |
 | Cloudflare zone ID | `cf450f9e453809e8f6e718404509a3d0` |
 | 分配到的 NS | `adrian.ns.cloudflare.com` / `bradley.ns.cloudflare.com` |
-| 自定义域 | `intowild.online`、`www.intowild.online`（均 `custom_domain: true`） |
+| 自定义域 | `intowild.online`、`www.intowild.online`、`activitymap.intowild.online`（均 `custom_domain: true`） |
 | 证书 | Universal SSL，自动签发 |
 
 上线过程中踩到并处理掉的两个坑，改了这里的东西前先读一遍：

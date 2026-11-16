@@ -1,0 +1,99 @@
+/* 活动地图页（activitymap.intowild.online）专用样式，配色沿用 index.css 的变量 */
+
+.map-page {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(18px, 3vw, 34px) clamp(20px, 5vw, 56px);
+}
+
+.map-bar,
+.map-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+.map-bar {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.map-foot {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.map-back,
+.map-foot a {
+  color: var(--ink-2);
+}
+
+.map-back:hover,
+.map-foot a:hover {
+  color: var(--ink);
+}
+
+.map-tag {
+  letter-spacing: 0.14em;
+}
+
+.map-title {
+  font-size: clamp(44px, 8vw, 108px);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  margin: 0;
+}
+
+.map-lead {
+  margin-top: clamp(14px, 2vw, 22px);
+  max-width: 30ch;
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+
+.map-canvas {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.map-blank {
+  flex: 1;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed rgba(242, 239, 230, 0.28);
+  background: #0a0a0a;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.map-blank-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--clay);
+  display: block;
+}
+
+.map-note {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-3);
+  max-width: 56ch;
+}

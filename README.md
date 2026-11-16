@@ -18,15 +18,21 @@ npm run build   # 生产构建，产物在 dist/
 ## 目录说明
 
 ```
-index.html                  页面外壳：<title>、meta、canonical 都在这
+index.html                  主站外壳：<title>、meta、canonical 都在这
+activitymap.html            活动地图子域名的外壳
 src/main.tsx                React 挂载入口，一般不用动
 src/App.tsx                 ★ 整个首页：文案常量 SITE 在文件顶部，下面是版式
+src/activitymap-entry.tsx   活动地图页挂载入口
+src/activitymap.tsx         活动地图页（骨架：地图待接入）
+src/activitymap.css         活动地图页样式
 src/components/Todo.tsx     占位标记 <Todo>
 src/index.css               全部样式：配色变量在最上面
 public/                     原样拷进 dist：favicon、_headers、robots.txt、sitemap.xml、404.html
-worker/index.ts             Worker 入口：www 跳主域 + 交给静态资源 + 补安全头
+worker/index.ts             Worker 入口：www 跳主域 + 子域分流 + 交给静态资源
 dist/                       构建产物，自动生成，不要手改
 ```
+
+三个主机名共用同一个 Worker：`intowild.online`（主站）、`www.intowild.online`（301 到主域）、`activitymap.intowild.online`（地图页）。
 
 ## 常见修改对照
 
@@ -35,7 +41,9 @@ dist/                       构建产物，自动生成，不要手改
 | 社团名、所属学校/城市、一句话定位 | `src/App.tsx` 顶部的 `SITE` |
 | 版式、字号、间距 | `src/index.css` |
 | 配色 | `src/index.css` 的 `:root` 变量 |
-| 浏览器标签标题、分享卡片 | `index.html` 的 `<title>` / `og:` |
+| 浏览器标签标题、分享卡片 | `index.html` / `activitymap.html` 的 `<title>` / `og:` |
+| 右下角「活动地图」按钮 | `src/App.tsx` 底部的 `<a className="fab">`，样式在 `src/index.css` 的 `.fab` |
+| 活动地图页内容 | `src/activitymap.tsx`（接入地图时替换 `.map-blank` 那块） |
 | 404 页 | `public/404.html`（纯静态，不走 React） |
 
 ## 占位怎么填

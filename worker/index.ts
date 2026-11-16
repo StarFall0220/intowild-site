@@ -1,18 +1,23 @@
 /**
  * intowild-site Worker
  *
- * 两件事：
- *   1. www.intowild.online → 301 到 intowild.online（避免同一内容两个地址）
- *   2. 其余请求交给静态资源（dist/），顺便补一层安全响应头
+ * 三个主机名共用这一个 Worker：
+ *   intowild.online            → 主站（dist/index.html）
+ *   www.intowild.online        → 301 到主域
+ *   activitymap.intowild.online→ 活动地图页（dist/activitymap.html）
  *
- * 以后要加报名接口、活动 API，都在这里加分支，不要动 dist/。
- *
- * 本地起 Worker 调试：npx wrangler dev
- * 部署：npm run build && npx wrangler deploy
+ * 绑定前确认主机名上没有既存的 A/CNAME，否则 deploy 会报 code 100117。
+ * 本地起 Worker 调试：npx wrangler dev；部署：npm run build && npx wrangler deploy
  */
 
 /** 主域名。换域名时改这里 + wrangler.jsonc 的 routes + 各 html 的 canonical */
 const APEX = 'intowild.online'
+
+/** 活动地图子域名 */
+const ACTIVITY_HOST = `activitymap.${APEX}`
+
+/** 子域名根路径实际渲染的静态页面（不带 .html，避免静态资源层再 307 一次） */
+const ACTIVITY_PAGE = '/activitymap'
 
 interface Env {
   ASSETS: Fetcher
@@ -26,6 +31,13 @@ export default {
     if (url.hostname === `www.${APEX}`) {
       url.hostname = APEX
       return Response.redirect(url.toString(), 301)
+    }
+
+    // 子域名根路径 → 地图页；其余路径仍按静态资源走（css/js 才能正常加载）
+    if (url.hostname === ACTIVITY_HOST && (url.pathname === '/' || url.pathname === '')) {
+      const inner = new URL(request.url)
+      inner.pathname = ACTIVITY_PAGE
+      return env.ASSETS.fetch(new Request(inner.toString(), request))
     }
 
     const res = await env.ASSETS.fetch(request)

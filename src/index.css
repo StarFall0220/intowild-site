@@ -83,6 +83,8 @@ p {
 
 .base {
   padding-top: 14px;
+  /* 给右下角的浮动入口让位，避免压住页脚文字 */
+  padding-bottom: 84px;
   border-top: 1px solid var(--line);
 }
 
@@ -158,6 +160,42 @@ p {
   -webkit-box-decoration-break: clone;
 }
 
+/* ---------- 右下角浮动入口 ---------- */
+
+.fab {
+  position: fixed;
+  right: clamp(16px, 3vw, 28px);
+  bottom: clamp(16px, 3vw, 28px);
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 18px;
+  background: #000;
+  color: var(--ink);
+  border: 1px solid rgba(242, 239, 230, 0.28);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.fab:hover {
+  border-color: var(--clay);
+  background: #0d0d0d;
+}
+
+.fab-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--clay);
+  display: block;
+}
+
+.fab-arrow {
+  opacity: 0.55;
+}
+
 /* ---------- 窄屏 ---------- */
 
 @media (max-width: 560px) {
@@ -168,6 +206,15 @@ p {
   .base {
     justify-content: flex-start;
     line-height: 1.9;
+    /* 窄屏按钮更小，留 64px 就够 */
+    padding-bottom: 64px;
+  }
+
+  .fab {
+    right: 14px;
+    bottom: 14px;
+    padding: 11px 15px;
+    font-size: 12px;
   }
 }
 

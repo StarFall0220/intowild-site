@@ -52,6 +52,19 @@ export default function App() {
         </span>
         <span>Vite · React · Cloudflare Workers</span>
       </footer>
+
+      {/* 浮动入口：固定在右下角，跳转到活动地图子域名 */}
+      <a
+        className="fab"
+        href="https://activitymap.intowild.online"
+        aria-label="打开活动地图（activitymap.intowild.online）"
+      >
+        <span className="fab-dot" aria-hidden="true" />
+        活动地图
+        <span className="fab-arrow" aria-hidden="true">
+          ↗
+        </span>
+      </a>
     </main>
   )
 }
