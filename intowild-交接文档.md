@@ -1,4 +1,4 @@
-# intowild户外社 站点交接文档
+# Into Wild 户外社 站点交接文档
 
 **现状**：**已上线**，`https://intowild.online` 可访问（`www` 301 跳主域）。Vite + React（TypeScript）单页站点，源码在 GitHub（`StarFall0220/intowild-site`），Cloudflare Workers 托管。日常只需要改源码、提交、推送，或本地 `npx wrangler deploy`。
 
@@ -26,9 +26,9 @@ Node 装在 `C:\node`（v24.22.1），PATH 里可能没有，所以 `start-dev.c
 
 只有一个主页，整屏黑底：
 
-1. 顶栏：左侧 `■ intowild`，右侧 `intowild.online`
-2. 主区：小标题 `OUTDOOR CLUB · 上海` → 大标题 `intowild / 户外社` → 一句话定位 `Into the wild, out of the ordinary.`
-3. 底栏：一行 `© 年份 intowild户外社`
+1. 顶栏：左侧 `■ Into Wild`，右侧 `intowild.online`
+2. 主区：小标题 `OUTDOOR CLUB · 上海` → 大标题 `Into Wild / 户外社` → 一句话定位 `Into the wild, out of the ordinary.`
+3. 底栏：一行 `© 年份 Into Wild 户外社`
 4. 右下角固定一个 `活动地图 ↗` 浮动按钮，跳 `https://activitymap.intowild.online`
 
 另有两个非主页面的入口：
@@ -169,7 +169,7 @@ curl -I https://www.intowild.online/        # 301 → 主域
 curl -I https://intowild.online/no-such     # 404，且是自定义 404 页
 ```
 
-再手动过一遍：手机 4G 打开，黑底、标题 `intowild户外社`、无横向滚动。
+再手动过一遍：手机 4G 打开，黑底、标题 `Into Wild 户外社`、无横向滚动。
 
 ## 6. 构建失败与回滚
 

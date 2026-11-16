@@ -1,6 +1,6 @@
 # intowild-site
 
-intowild户外社 官网（`https://intowild.online`）。**Vite + React + TypeScript** 单页站点，部署在 **Cloudflare Workers（Static Assets）**。
+Into Wild 户外社 官网（`https://intowild.online`）。**Vite + React + TypeScript** 单页站点，部署在 **Cloudflare Workers（Static Assets）**。
 
 > 注意：这里是 Workers + Static Assets，**不是 Cloudflare Pages**。
 > 面板里在 **Workers & Pages → Workers** 标签下找 `intowild-site`，Pages 标签下是空的。

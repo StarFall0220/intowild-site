@@ -7,8 +7,8 @@ import './index.css'
  * 值以 < 开头会渲染成橙色占位框；填成正常文字就自动变成普通文本。
  */
 const SITE = {
-  name: 'intowild户外社',
-  en: 'intowild',
+  name: 'Into Wild 户外社',
+  en: 'Into Wild',
   /** 所属学校 / 城市 */
   org: '上海',
   /** 一句话定位 */

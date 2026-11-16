@@ -31,7 +31,7 @@ export function ActivityMap() {
       </section>
 
       <footer className="map-foot">
-        <span>intowild户外社</span>
+        <span>Into Wild 户外社</span>
         <a href="https://intowild.online">返回主页 ↗</a>
       </footer>
     </main>
