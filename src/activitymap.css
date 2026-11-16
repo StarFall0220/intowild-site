@@ -1,44 +1,39 @@
-/* 活动地图页（activitymap.intowild.online）专用样式，配色沿用 index.css 的变量 */
+/* 活动地图页（activitymap.intowild.online）
+   配色沿用 index.css 的变量：纯黑底 + 暖白字 + 陶土橙强调 */
 
 .map-page {
-  min-height: 100vh;
-  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: clamp(20px, 3vw, 32px);
-  padding: clamp(18px, 3vw, 34px) clamp(20px, 5vw, 56px);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: clamp(10px, 1.6vw, 18px);
+  padding: clamp(12px, 2.4vw, 26px) clamp(14px, 4vw, 40px) clamp(12px, 2.4vw, 26px);
+  overflow: hidden;
 }
 
-.map-bar,
-.map-foot {
+/* ---------- 顶栏 ---------- */
+
+.map-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--ink-3);
 }
 
-.map-bar {
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
-}
-
-.map-foot {
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-}
-
-.map-back,
-.map-foot a {
+.map-back {
   color: var(--ink-2);
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
 }
 
-.map-back:hover,
-.map-foot a:hover {
+.map-back:hover {
   color: var(--ink);
 }
 
@@ -46,54 +41,269 @@
   letter-spacing: 0.14em;
 }
 
+/* ---------- 标题（比原骨架小，把高度让给地图） ---------- */
+
+.map-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+}
+
 .map-title {
-  font-size: clamp(44px, 8vw, 108px);
-  line-height: 0.92;
-  letter-spacing: -0.04em;
+  font-size: clamp(22px, 3.2vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.03em;
   font-weight: 800;
   margin: 0;
 }
 
 .map-lead {
-  margin-top: clamp(14px, 2vw, 22px);
-  max-width: 30ch;
-  font-size: clamp(15px, 1.4vw, 18px);
-  line-height: 1.8;
-  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin: 0;
 }
 
-.map-canvas {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+/* ---------- 地图容器 ---------- */
+
+.map-stage {
   min-height: 0;
-}
-
-.map-blank {
-  flex: 1;
-  min-height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  border: 1px dashed rgba(242, 239, 230, 0.28);
-  background: #0a0a0a;
-  font-family: var(--mono);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
 }
 
-.map-blank-dot {
-  width: 7px;
-  height: 7px;
-  background: var(--clay);
+.map-canvas {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #000;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.map-canvas:active {
+  cursor: grabbing;
+}
+
+.map-content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.map-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* ---------- 星标 ---------- */
+
+.marker {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  /* 反向缩放：地图放大时按钮保持同样的屏幕尺寸，方便点 */
+  transform: translate(-50%, -50%) scale(var(--inv, 1));
+  transform-origin: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.marker svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--clay);
+  stroke: #2b0f04;
+  stroke-width: 1.2;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+  transition: transform 0.15s ease;
+}
+
+.marker:hover svg,
+.marker:focus-visible svg {
+  transform: scale(1.25);
+}
+
+.marker-label {
+  display: none;
+  position: absolute;
+  top: 34px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 0 4px;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(242, 239, 230, 0.25);
+}
+
+/* 放大后才显示编号，避免缩略状态下文字挤成一团 */
+.map-content[data-zoomed='true'] .marker-label {
   display: block;
 }
 
-.map-note {
-  font-size: 13px;
-  line-height: 1.7;
+/* ---------- 缩放控件 ---------- */
+
+.map-controls {
+  /* 固定到视口右下角，避免压住地图内容（桌面在右侧黑边，手机在地图下方） */
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+
+.map-controls button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(242, 239, 230, 0.28);
+  background: #000;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.map-controls button:hover {
+  border-color: var(--clay);
+  color: var(--clay);
+}
+
+.map-scale {
+  min-width: 42px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
   color: var(--ink-3);
-  max-width: 56ch;
+}
+
+/* ---------- 图片弹窗 ---------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 32px);
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.lightbox-inner {
+  margin: 0;
+  max-width: min(1100px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lightbox-inner img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100svh - 120px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid var(--line);
+}
+
+.lightbox-inner figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lightbox-id {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--clay);
+}
+
+.lightbox-close {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: #000;
+  color: var(--ink);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.lightbox-close:hover {
+  border-color: var(--clay);
+  color: var(--clay);
+}
+
+/* ---------- 窄屏 ---------- */
+
+@media (max-width: 560px) {
+  .map-page {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .map-head {
+    gap: 4px;
+  }
+
+  .map-title {
+    font-size: 22px;
+  }
+
+  .map-lead {
+    font-size: 12px;
+  }
+
+  .map-controls {
+    right: 8px;
+    bottom: 8px;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .map-controls button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .map-scale {
+    display: none;
+  }
+
+  /* 地图在窄屏只有 ~364px 宽，星标跟着缩小一点，避免盖住底图 */
+  .marker svg {
+    width: 15px;
+    height: 15px;
+  }
 }
