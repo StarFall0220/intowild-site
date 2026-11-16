@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MAP, MARKERS } from './map-markers'
 
 const MIN_SCALE = 1
 const MAX_SCALE = 6
+
+/** 缩略图尺寸与相对星标的间距（px，屏幕坐标，不随地图缩放） */
+const THUMB_W = 148
+const THUMB_H = 104
+const THUMB_GAP = 14
+const STAR_HALF = 10
+const EDGE = 8
 
 interface View {
   x: number
@@ -15,9 +22,14 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 export function ActivityMap() {
   const stageRef = useRef<HTMLDivElement>(null)
   const areaRef = useRef<HTMLDivElement>(null)
+  const panelCloseRef = useRef<HTMLButtonElement>(null)
+
   const [box, setBox] = useState({ w: 0, h: 0 })
   const [view, setView] = useState<View>({ x: 0, y: 0, s: 1 })
+  /** 当前显示缩略图的星标 */
   const [active, setActive] = useState<string | null>(null)
+  /** 当前在侧栏里显示的星标 */
+  const [panel, setPanel] = useState<string | null>(null)
 
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null)
@@ -27,6 +39,8 @@ export function ActivityMap() {
   const suppressClick = useRef(false)
   /** 这次按下落在哪个星标上（指针捕获后 click 会落到舞台，需自己判定） */
   const pressId = useRef<string | null>(null)
+  /** 这次按下是否落在缩略图上 */
+  const pressThumb = useRef(false)
 
   // 量的是外层可用区域，画布按地图比例收缩，避免上下大片黑边
   useEffect(() => {
@@ -71,6 +85,16 @@ export function ActivityMap() {
 
   const reset = useCallback(() => setView({ x: 0, y: 0, s: 1 }), [])
 
+  const openPanel = useCallback((id: string) => {
+    setActive(id)
+    setPanel(id)
+  }, [])
+
+  const closePanel = useCallback(() => {
+    setPanel(null)
+    setActive(null)
+  }, [])
+
   // 滚轮缩放：必须用非 passive 监听，否则无法阻止页面滚动
   useEffect(() => {
     const el = stageRef.current
@@ -83,15 +107,27 @@ export function ActivityMap() {
     return () => el.removeEventListener('wheel', onWheel)
   }, [zoomAt])
 
-  // ESC 关闭图片
+  // 键盘：Esc 关侧栏（没有侧栏就收起缩略图）
   useEffect(() => {
-    if (!active) return
+    if (!panel && !active) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setActive(null)
+      if (e.key !== 'Escape') return
+      if (panel) closePanel()
+      else setActive(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [active])
+  }, [panel, active, closePanel])
+
+  // 打开侧栏后把焦点移到关闭按钮；关闭后焦点回到对应星标
+  useEffect(() => {
+    if (panel) {
+      panelCloseRef.current?.focus()
+    } else if (active === null) {
+      const last = stageRef.current?.getAttribute('data-last-marker')
+      if (last) document.querySelector<HTMLButtonElement>(`[data-marker="${last}"]`)?.focus()
+    }
+  }, [panel, active])
 
   const onPointerDown = (e: React.PointerEvent) => {
     const el = stageRef.current
@@ -101,21 +137,7 @@ export function ActivityMap() {
     moved.current = 0
     suppressClick.current = false
     pressId.current = (e.target as HTMLElement).closest('[data-marker]')?.getAttribute('data-marker') ?? null
-
-    if (pointers.current.size === 1) {
-      drag.current = { px: e.clientX, py: e.clientY, x: view.x, y: view.y }
-    } else if (pointers.current.size === 2) {
-      const [a, b] = [...pointers.current.values()]
-      pinch.current = {
-        d: Math.hypot(a.x - b.x, a.y - b.y),
-        s: view.s,
-        x: view.x,
-        y: view.y,
-        cx: (a.x + b.x) / 2,
-        cy: (a.y + b.y) / 2,
-      }
-      drag.current = null
-    }
+    pressThumb.current = !!(e.target as HTMLElement).closest('.thumb')
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -150,23 +172,49 @@ export function ActivityMap() {
     if (pointers.current.size === 0) {
       drag.current = null
       if (moved.current > 6) suppressClick.current = true
-      // 指针捕获会让 click 落到舞台上，这里按「按下的目标 + 没怎么移动」判定点星标
-      if (moved.current <= 6 && pressId.current) {
-        setActive(pressId.current)
+
+      if (moved.current <= 6) {
+        const id = pressId.current
+        if (pressThumb.current && active) {
+          // 点缩略图 = 第二步
+          openPanel(active)
+        } else if (id) {
+          stageRef.current?.setAttribute('data-last-marker', id)
+          // 第一次点：出缩略图；再点同一处：开侧栏
+          if (active === id) openPanel(id)
+          else setActive(id)
+        } else if (active && !panel) {
+          // 点空白收起缩略图
+          setActive(null)
+        }
       }
       pressId.current = null
+      pressThumb.current = false
     }
-  }
-
-  const openPhoto = (id: string) => {
-    if (suppressClick.current) {
-      suppressClick.current = false
-      return
-    }
-    setActive(id)
   }
 
   const inv = 1 / view.s
+  const panelId = panel
+  const activeMarker = useMemo(() => MARKERS.find((m) => m.id === active) ?? null, [active])
+
+  // 缩略图位置：把星标换算到画布坐标，默认在上方，贴顶就翻到下方，并夹在画布内
+  const thumb = useMemo(() => {
+    if (!activeMarker || !cw || !ch) return null
+    // 画布很矮时按比例缩小缩略图，保证「不压星标」还有解
+    const tw = Math.min(THUMB_W, Math.max(96, Math.round(cw * 0.42)))
+    const th = Math.min(THUMB_H, Math.max(64, Math.round(ch * 0.34)))
+
+    const x = cw / 2 + view.x + (activeMarker.x / 100 - 0.5) * cw * view.s
+    const y = ch / 2 + view.y + (activeMarker.y / 100 - 0.5) * ch * view.s
+
+    const fits = (top: number) => top >= EDGE && top + th <= ch - EDGE
+    let top = y - STAR_HALF - THUMB_GAP - th
+    if (!fits(top)) top = y + STAR_HALF + THUMB_GAP
+    if (!fits(top)) top = clamp(top, EDGE, Math.max(EDGE, ch - th - EDGE))
+
+    const left = clamp(x - tw / 2, EDGE, Math.max(EDGE, cw - tw - EDGE))
+    return { left, top, w: tw, h: th }
+  }, [activeMarker, cw, ch, view])
 
   return (
     <main className="map-page">
@@ -179,7 +227,7 @@ export function ActivityMap() {
 
       <div className="map-head">
         <h1 className="map-title">活动地图</h1>
-        <p className="map-lead">滚轮或双指缩放，拖动查看；点星标看照片。</p>
+        <p className="map-lead">滚轮或双指缩放，拖动查看；点星标看小图，再点开大图。</p>
       </div>
 
       <div className="map-stage" ref={areaRef}>
@@ -194,78 +242,103 @@ export function ActivityMap() {
           role="application"
           aria-label="植物园藏宝图，可缩放拖动"
         >
-        <div
-          className="map-content"
-          data-zoomed={view.s >= 2.2 ? 'true' : 'false'}
-          style={{
-            width: cw || 1,
-            height: ch || 1,
-            transform: `translate(-50%, -50%) translate(${view.x}px, ${view.y}px) scale(${view.s})`,
-          }}
-        >
-          <img className="map-img" src="/map/botanical-map.jpg" alt="上海植物园藏宝图" draggable={false} />
+          <div
+            className="map-content"
+            data-zoomed={view.s >= 2.2 ? 'true' : 'false'}
+            style={{
+              width: cw || 1,
+              height: ch || 1,
+              transform: `translate(-50%, -50%) translate(${view.x}px, ${view.y}px) scale(${view.s})`,
+            }}
+          >
+            <img className="map-img" src="/map/botanical-map.jpg" alt="上海植物园藏宝图" draggable={false} />
 
-          {MARKERS.map((m) => (
+            {MARKERS.map((m) => (
+              <button
+                key={m.id}
+                className={m.id === active ? 'marker is-active' : 'marker'}
+                data-marker={m.id}
+                style={{ left: `${m.x}%`, top: `${m.y}%`, ['--inv' as string]: inv }}
+                onClick={() => {
+                  if (suppressClick.current) {
+                    suppressClick.current = false
+                    return
+                  }
+                  if (active === m.id) openPanel(m.id)
+                  else setActive(m.id)
+                }}
+                aria-label={`地点 ${m.id}，查看缩略图`}
+                aria-expanded={active === m.id}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 1.6l3.1 6.9 7.3.7-5.5 4.9 1.6 7.2L12 17.5 5.5 21.3l1.6-7.2L1.6 9.2l7.3-.7z" />
+                </svg>
+                <span className="marker-label">{m.id}</span>
+              </button>
+            ))}
+          </div>
+
+          {thumb && active && (
             <button
-              key={m.id}
-              className="marker"
-              data-marker={m.id}
-              style={{ left: `${m.x}%`, top: `${m.y}%`, ['--inv' as string]: inv }}
-              onClick={() => openPhoto(m.id)}
-              aria-label={`查看地点 ${m.id} 的照片`}
+              className="thumb"
+              style={{ left: thumb.left, top: thumb.top, width: thumb.w, height: thumb.h }}
+              onClick={(e) => {
+                e.stopPropagation()
+                openPanel(active)
+              }}
+              aria-label={`地点 ${active}，查看大图`}
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 1.6l3.1 6.9 7.3.7-5.5 4.9 1.6 7.2L12 17.5 5.5 21.3l1.6-7.2L1.6 9.2l7.3-.7z" />
-              </svg>
-              <span className="marker-label">{m.id}</span>
+              <img src={`/photos/thumbs/${active}.jpg`} alt={`地点 ${active} 缩略图`} draggable={false} />
+              <span className="thumb-id">{active}</span>
             </button>
-          ))}
-        </div>
-
-        <div className="map-controls">
-          <button
-            type="button"
-            onClick={() => zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1 / 1.4)}
-            aria-label="缩小"
-          >
-            −
-          </button>
-          <span className="map-scale" aria-live="polite">
-            {view.s.toFixed(1)}×
-          </span>
-          <button
-            type="button"
-            onClick={() => zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1.4)}
-            aria-label="放大"
-          >
-            +
-          </button>
-          <button type="button" onClick={reset} aria-label="复位">
-            ⟲
-          </button>
-        </div>
+          )}
         </div>
       </div>
 
-      {active && (
-        <div
-          className="lightbox"
-          onClick={() => setActive(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label={`地点 ${active} 的照片`}
+      <div className="map-controls">
+        <button
+          type="button"
+          onClick={() => zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1 / 1.4)}
+          aria-label="缩小"
         >
-          <figure className="lightbox-inner" onClick={(e) => e.stopPropagation()}>
-            <img src={`/photos/${active}.jpg`} alt={`地点 ${active}`} />
-            <figcaption>
-              <span className="lightbox-id">{active}</span>
-              <button type="button" className="lightbox-close" onClick={() => setActive(null)} aria-label="关闭">
-                ✕
-              </button>
-            </figcaption>
-          </figure>
+          −
+        </button>
+        <span className="map-scale" aria-live="polite">
+          {view.s.toFixed(1)}×
+        </span>
+        <button
+          type="button"
+          onClick={() => zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1.4)}
+          aria-label="放大"
+        >
+          +
+        </button>
+        <button type="button" onClick={reset} aria-label="复位">
+          ⟲
+        </button>
+      </div>
+
+      <div
+        className={panelId ? 'panel-backdrop is-open' : 'panel-backdrop'}
+        onClick={closePanel}
+        aria-hidden="true"
+      />
+
+      <aside
+        className={panelId ? 'panel is-open' : 'panel'}
+        role="dialog"
+        aria-modal={panelId ? 'true' : undefined}
+        aria-label={panelId ? `地点 ${panelId} 的大图` : '大图侧栏'}
+        aria-hidden={panelId ? undefined : 'true'}
+      >
+        <div className="panel-head">
+          <span className="panel-id">{panelId ?? ''}</span>
+          <button ref={panelCloseRef} type="button" className="panel-close" onClick={closePanel} aria-label="关闭大图">
+            ✕
+          </button>
         </div>
-      )}
+        <div className="panel-body">{panelId && <img src={`/photos/${panelId}.jpg`} alt={`地点 ${panelId}`} />}</div>
+      </aside>
     </main>
   )
 }

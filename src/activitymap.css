@@ -41,7 +41,7 @@
   letter-spacing: 0.14em;
 }
 
-/* ---------- 标题（比原骨架小，把高度让给地图） ---------- */
+/* ---------- 标题 ---------- */
 
 .map-head {
   display: flex;
@@ -132,12 +132,19 @@
   stroke: #2b0f04;
   stroke-width: 1.2;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, fill 0.15s ease;
 }
 
 .marker:hover svg,
-.marker:focus-visible svg {
+.marker:focus-visible svg,
+.marker.is-active svg {
   transform: scale(1.25);
+}
+
+.marker.is-active svg {
+  fill: var(--ink);
+  stroke: var(--clay);
+  stroke-width: 1.6;
 }
 
 .marker-label {
@@ -156,6 +163,145 @@
 /* 放大后才显示编号，避免缩略状态下文字挤成一团 */
 .map-content[data-zoomed='true'] .marker-label {
   display: block;
+}
+
+/* ---------- 第一步：星标上方的小缩略图 ---------- */
+
+.thumb {
+  position: absolute;
+  z-index: 5;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(242, 239, 230, 0.35);
+  background: #000;
+  cursor: zoom-in;
+  overflow: hidden;
+  transform-origin: center bottom;
+  animation: thumb-in 0.16s ease-out;
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-id {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 1px 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.72);
+  border-top: 1px solid rgba(242, 239, 230, 0.25);
+  border-right: 1px solid rgba(242, 239, 230, 0.25);
+}
+
+.thumb:hover {
+  border-color: var(--clay);
+}
+
+@keyframes thumb-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- 第二步：侧栏（桌面左侧 / 手机顶部抽屉） ---------- */
+
+.panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
+}
+
+.panel-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.panel {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  border-right: 1px solid var(--line);
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+  visibility: hidden;
+}
+
+.panel.is-open {
+  transform: none;
+  visibility: visible;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-id {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--clay);
+}
+
+.panel-close {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: #000;
+  color: var(--ink);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.panel-close:hover,
+.panel-close:focus-visible {
+  border-color: var(--clay);
+  color: var(--clay);
+}
+
+.panel-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel-body img {
+  position: absolute;
+  inset: 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 24px);
+  object-fit: contain;
+  border: 1px solid var(--line);
+  background: #000;
 }
 
 /* ---------- 缩放控件 ---------- */
@@ -203,69 +349,7 @@
   color: var(--ink-3);
 }
 
-/* ---------- 图片弹窗 ---------- */
-
-.lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  padding: clamp(12px, 3vw, 32px);
-  background: rgba(0, 0, 0, 0.92);
-}
-
-.lightbox-inner {
-  margin: 0;
-  max-width: min(1100px, 100%);
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.lightbox-inner img {
-  display: block;
-  max-width: 100%;
-  max-height: calc(100svh - 120px);
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border: 1px solid var(--line);
-}
-
-.lightbox-inner figcaption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.lightbox-id {
-  font-family: var(--mono);
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  color: var(--clay);
-}
-
-.lightbox-close {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  background: #000;
-  color: var(--ink);
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.lightbox-close:hover {
-  border-color: var(--clay);
-  color: var(--clay);
-}
-
-/* ---------- 窄屏 ---------- */
+/* ---------- 窄屏：侧栏改成顶部抽屉 ---------- */
 
 @media (max-width: 560px) {
   .map-page {
@@ -305,5 +389,33 @@
   .marker svg {
     width: 15px;
     height: 15px;
+  }
+
+  .panel {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    max-width: none;
+    height: min(46svh, 420px);
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    transform: translateY(-100%);
+  }
+
+  .panel-body img {
+    inset: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb,
+  .panel,
+  .panel-backdrop {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
   }
 }
