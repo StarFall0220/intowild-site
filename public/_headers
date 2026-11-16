@@ -1,0 +1,16 @@
+# Cloudflare Workers 静态资源响应头
+# 语法：<匹配路径> 换行 缩进的两空格 "头名: 值"
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+# 带哈希的构建产物可以长缓存
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML 每次都回源，避免换届改了文案别人还看到旧版
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate

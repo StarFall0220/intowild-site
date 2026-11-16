@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+.vercel
+*.log
+
+# 本地工具产物
+.tmp-shots/
+.wrangler/
+
+# 本地 Worker 环境变量（含密钥，不要提交）
+.dev.vars
