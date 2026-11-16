@@ -1,6 +1,6 @@
 # intowild-site
 
-intowild 户外社官网。**Vite + React + TypeScript** 多页站点，部署在 **Cloudflare Workers（Static Assets）**。
+intowild 户外社官网（`https://intowild.online`）。**Vite + React + TypeScript** 多页站点，部署在 **Cloudflare Workers（Static Assets）**。
 
 > 注意：这里是 Workers + Static Assets，**不是 Cloudflare Pages**。
 > 面板里在 **Workers & Pages → Workers** 标签下找 `intowild-site`，Pages 标签下是空的。
@@ -79,6 +79,4 @@ npx wrangler deploy
 
 1. `src/content.ts` 里所有 `<...>` 占位
 2. `wrangler.jsonc` 里取消注释 `routes`，填真实域名
-3. 各 `.html` 里的 `canonical` 与 `og:url`
-4. `public/robots.txt` 里的 `Sitemap`（如果要做 sitemap）
-5. 照片放进 `public/photos/`，在 `content.ts` 的 `photos` 里填 `src`
+3. 照片放进 `public/photos/`，在 `content.ts` 的 `photos` 里填 `src`

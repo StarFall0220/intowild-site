@@ -8,13 +8,13 @@
 
 | 项 | 值 |
 | --- | --- |
-| 域名 | `<待定>`（买好后填这里） |
+| 域名 | `intowild.online`（Spaceship 注册，NS 托管到 Cloudflare） |
 | 技术栈 | Vite + React（TypeScript） |
 | 托管 | Cloudflare Workers（Static Assets） |
 | 项目名 | `intowild-site` |
 | 本地路径 | `C:\Users\tong7\Documents\intowild-site` |
 | 代码仓库 | `<待创建>`，分支 `main` |
-| 线上地址 | `<待定>`（`www.<域名>` 301 跳主域名） |
+| 线上地址 | `https://intowild.online`（`www.intowild.online` 301 跳主域） |
 
 部署参数：构建命令 `npm run build`，部署命令 `npx wrangler deploy`，静态产物目录 `./dist`（由 `wrangler.jsonc` 的 `assets.directory` 指定）。
 
@@ -79,7 +79,7 @@ Node 装在 `C:\node`（v24.22.1），PATH 里可能没有，所以 `start-dev.c
 6. 打开线上地址，按 `Ctrl + Shift + R` 强刷，确认新内容已经上线。也可以直接用命令确认：
 
    ```bash
-   curl -s -o /dev/null -w "%{http_code}\n" https://<你的域名>/
+   curl -s -o /dev/null -w "%{http_code}\n" https://intowild.online/
    ```
 
 ## 5. 首次上线步骤
@@ -121,23 +121,26 @@ Cloudflare 面板 → Workers & Pages → `intowild-site` → **Settings → Bui
 
 > 面板文案可能随版本微调，认准「构建命令 / 部署命令 / 根目录」这三项即可。
 
-### 5.4 绑域名
+### 5.4 接域名、绑到 Worker
 
-前提：域名已托管在同一个 Cloudflare 账号（NS 指向 Cloudflare）。
+**第一步：把域名接进 Cloudflare。** 域名在 Spaceship 注册，当前 NS 是 `launch1/launch2.spaceship.net`。
 
-面板 → `intowild-site` → **Settings → Domains & Routes → Add → Custom domain**，依次添加：
+1. Cloudflare → **Add a site** → 输入 `intowild.online` → 选 Free 计划 → 记下分配的两个 NS（形如 `xxx.ns.cloudflare.com`）。
+2. Spaceship 后台 → 该域名 → **Nameservers** → 改成 Custom nameservers，填这两个。
+3. 回 Cloudflare 点 **Check nameservers**，状态变成 **Active** 再往下走（通常 10 分钟–2 小时，最长 24 小时）。
 
-1. `<你的域名>`（apex，主站）
-2. `www.<你的域名>`（跳转用）
+**第二步：绑到 Worker。** `wrangler.jsonc` 的 `routes` 已经写好两个域名，直接部署：
 
-因为域名就在 Cloudflare，CNAME 会自动创建、证书会自动签发，不需要手动加记录。等状态变成 **Active**。
+```bash
+npm run build
+npx wrangler deploy
+```
 
-再把 `www` 301 到主域：**Rules → Redirect Rules → Create rule**
+Cloudflare 会自动创建 CNAME 并签发证书，状态在 **Settings → Domains & Routes** 里看，变 **Active** 即可。zone 还没 Active 时 deploy 会报错，先把上一步做完。
 
-- 请求 URL：`www.<你的域名>/*`
-- 目标：`https://<你的域名>/$1`，状态码 `301`
+> 也可以在面板里手动 Add custom domain，效果一样。
 
-最后把 `wrangler.jsonc` 里的 `routes` 取消注释并填上域名，重新 `npx wrangler deploy` 一次。
+**www 跳主域**：已经在 `worker/index.ts` 里处理（`www.intowild.online` → 301 `intowild.online`），不需要再配 Redirect Rule——两边都配会重复跳转。
 
 ### 5.5 DNS 记录长什么样
 
@@ -145,7 +148,7 @@ Cloudflare 面板 → Workers & Pages → `intowild-site` → **Settings → Bui
 
 | 类型 | 名称 | 内容 | 代理状态 | 用途 |
 | --- | --- | --- | --- | --- |
-| CNAME | `<你的域名>` | `intowild-site.<账号>.workers.dev` | 已代理（橙云） | 主站 |
+| CNAME | `intowild.online` | `intowild-site.<账号>.workers.dev` | 已代理（橙云） | 主站 |
 | CNAME | `www` | `intowild-site.<账号>.workers.dev` | 已代理（橙云） | 跳转源 |
 
 域名不在 Cloudflare 时，只能在自己的 DNS 服务商加 `www CNAME intowild-site.<账号>.workers.dev`，apex 需要 ALIAS/ANAME，多数国内 DNS 不支持——所以建议直接把 NS 迁到 Cloudflare。
@@ -153,9 +156,9 @@ Cloudflare 面板 → Workers & Pages → `intowild-site` → **Settings → Bui
 ### 5.6 上线验收
 
 ```bash
-curl -I https://<你的域名>/            # 200
-curl -I http://<你的域名>/             # 301 → https
-curl -I https://www.<你的域名>/        # 301 → 主域
+curl -I https://intowild.online/            # 200
+curl -I http://intowild.online/             # 301 → https
+curl -I https://www.intowild.online/        # 301 → 主域
 ```
 
 再手动过一遍：手机 4G 打开、五个页面都能点通、404 页正常、照片能显示。
