@@ -13,4 +13,21 @@
 
 # HTML 每次都回源，避免换届改了文案别人还看到旧版
 /*.html
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: no-store
+
+# 根路径 "/" 不走 /*.html 规则，单独声明，否则会被边缘缓存住（实测会 HIT 到旧页面）
+/
+  Cache-Control: no-store
+
+# 站点图标：文件名固定，缓 1 天足够，换图标时改文件名或加 ?v=
+/favicon.ico
+  Cache-Control: public, max-age=86400
+
+/favicon-*.png
+  Cache-Control: public, max-age=86400
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+
+/icon-*.png
+  Cache-Control: public, max-age=86400
