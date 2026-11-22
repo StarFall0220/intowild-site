@@ -313,6 +313,20 @@
   .gb-item-body {
     font-size: 14px;
   }
+
+  /* 手机端把欢迎语压成一行：字号收到 11px，字距略收紧 */
+  .gb-note {
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* 更窄的屏（≤360）再收一点，尽量仍是一行 */
+@media (max-width: 360px) {
+  .gb-note {
+    font-size: 10px;
+  }
 }
 
 /* ---------- 子域：管理（删除） ---------- */
