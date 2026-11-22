@@ -94,12 +94,6 @@ export function GuestbookForm() {
           </p>
         )}
         {status.kind === 'error' && <p className="gb-err">{errorText(status.code)}</p>}
-        {status.kind === 'idle' && len === 0 && (
-          <p className="gb-hint">
-            不用登录。发出去就存下来，也会出现在{' '}
-            <a href="https://guestbook.intowild.online">留言板</a> 上。
-          </p>
-        )}
       </div>
     </section>
   )

@@ -121,10 +121,6 @@
   color: var(--clay);
 }
 
-.gb-hint {
-  color: var(--ink-3);
-}
-
 .gb-status a {
   color: var(--ink);
   border-bottom: 1px solid var(--clay);
