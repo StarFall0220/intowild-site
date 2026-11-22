@@ -15,6 +15,11 @@
   --sans: "PingFang SC", "HarmonyOS Sans SC", "Noto Sans SC", "Microsoft YaHei",
     system-ui, -apple-system, sans-serif;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+
+  /* 首页背景图（上海地图海报）。换主题只改这两行：
+     emerald / noir / midnight_blue 三个版本已在 public/backgrounds/ */
+  --hero-img: url("/backgrounds/hero-emerald-landscape.webp");
+  --hero-img-portrait: url("/backgrounds/hero-emerald-portrait.webp");
 }
 
 *,
@@ -35,6 +40,39 @@ body {
   font-size: 16px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+/* 首页背景：上海地图海报，压暗后垫在内容下面。
+   换主题只要改 --hero-img / --hero-img-portrait 两个路径（图在 public/backgrounds/）。 */
+body:has(.page)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--hero-img);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* 压暗 + 左侧加重，保证大字文案的对比度 */
+body:has(.page)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(115% 85% at 18% 42%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.62) 42%, rgba(0, 0, 0, 0.86) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.2) 22%, rgba(0, 0, 0, 0.5) 86%, #000 100%);
+}
+
+@media (max-aspect-ratio: 4/5) {
+  body:has(.page)::before {
+    background-image: var(--hero-img-portrait, var(--hero-img));
+  }
 }
 
 h1,
@@ -61,6 +99,8 @@ p {
   grid-template-rows: auto 1fr auto;
   gap: clamp(28px, 5vw, 56px);
   padding: clamp(18px, 3vw, 34px) clamp(20px, 5vw, 56px);
+  position: relative;
+  z-index: 1;
 }
 
 .bar,
@@ -305,4 +345,20 @@ p {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+/* 首页背景图的 OSM 署名（ODbL 要求） */
+.credit {
+  color: var(--ink-3);
+  opacity: 0.75;
+}
+
+.credit a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 239, 230, 0.2);
+}
+
+.credit a:hover {
+  color: var(--ink-2);
 }

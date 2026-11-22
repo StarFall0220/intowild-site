@@ -54,6 +54,14 @@ export default function App() {
         <span>
           © {new Date().getFullYear()} {SITE.name}
         </span>
+        {/* 背景图由 OpenStreetMap 数据生成，ODbL 要求署名，别删 */}
+        <span className="credit">
+          地图数据 ©{' '}
+          <a href="https://www.openstreetmap.org/copyright" rel="noreferrer noopener" target="_blank">
+            OpenStreetMap
+          </a>{' '}
+          contributors
+        </span>
       </footer>
 
       {/* 浮动入口：固定在右下角，跳转到活动地图子域名 */}
