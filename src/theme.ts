@@ -11,11 +11,24 @@
 
 export type Mode = 'day' | 'night'
 
-/** 夜间：深色系，压暗后做纹理 */
+/** 夜间：深色系，压暗后做纹理（17 个主题里的全部深色款） */
 export const HERO_POOL_DARK = ['emerald', 'noir', 'midnight_blue', 'blueprint', 'neon_cyberpunk'] as const
 
-/** 日间：浅色系，黑字压在上面 */
-export const HERO_POOL_LIGHT = ['warm_beige', 'pastel_dream', 'autumn', 'terracotta', 'sunset'] as const
+/** 日间：浅色系，黑字压在上面（其余 12 个主题全在这） */
+export const HERO_POOL_LIGHT = [
+  'warm_beige',
+  'pastel_dream',
+  'autumn',
+  'terracotta',
+  'sunset',
+  'contrast_zones',
+  'copper_patina',
+  'forest',
+  'gradient_roads',
+  'japanese_ink',
+  'monochrome_blue',
+  'ocean',
+] as const
 
 const MODE_KEY = 'iw-theme'
 const DAY_START = 7
