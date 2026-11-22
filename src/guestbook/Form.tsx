@@ -35,6 +35,7 @@ export function GuestbookForm() {
       <p className="gb-label" id="gb-title">
         / 留言
       </p>
+      <p className="gb-note">欢迎来到Into Wild户外社留言板，畅所欲言出你的活动想法与形式！</p>
 
       <div className="gb-field">
         <label className="gb-sr" htmlFor="gb-body">
@@ -45,7 +46,7 @@ export function GuestbookForm() {
           className="gb-input"
           rows={3}
           maxLength={MAX_BODY + 40}
-          placeholder="哈喽！欢迎来到Into Wild户外社留言板，在这里畅所欲言出你的活动想法与活动形式哇"
+          placeholder="路过的话，来一句"
           value={body}
           disabled={sending}
           onChange={(e) => {
