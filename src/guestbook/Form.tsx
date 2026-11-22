@@ -86,13 +86,6 @@ export function GuestbookForm() {
       </div>
 
       <div className="gb-status" aria-live="polite">
-        {status.kind === 'ok' && (
-          <p className="gb-ok">
-            {status.duplicate ? '这条刚发过了' : `已收到${status.total ? ` · 第 ${status.total} 条` : ''}`}
-            {' · '}
-            <a href="https://guestbook.intowild.online">看全部留言 →</a>
-          </p>
-        )}
         {status.kind === 'error' && <p className="gb-err">{errorText(status.code)}</p>}
       </div>
     </section>

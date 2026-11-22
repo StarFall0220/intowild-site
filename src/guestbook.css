@@ -113,10 +113,6 @@
   line-height: 1.6;
 }
 
-.gb-ok {
-  color: var(--ink-2);
-}
-
 .gb-err {
   color: var(--clay);
 }
