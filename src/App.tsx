@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Todo } from './components/Todo'
+import { GuestbookForm } from './guestbook/Form'
 import './index.css'
+import './guestbook.css'
 
 /**
  * 单页站点。要改文案，只改下面这 4 个常量。
@@ -44,6 +46,8 @@ export default function App() {
         <p className="lead">
           <Ph value={SITE.tagline} />
         </p>
+
+        <GuestbookForm />
       </section>
 
       <footer className="base">

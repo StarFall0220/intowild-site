@@ -20,19 +20,26 @@ npm run build   # 生产构建，产物在 dist/
 ```
 index.html                  主站外壳：<title>、meta、canonical 都在这
 activitymap.html            活动地图子域名的外壳
+guestbook.html              留言板子域名的外壳
 src/main.tsx                React 挂载入口，一般不用动
 src/App.tsx                 ★ 整个首页：文案常量 SITE 在文件顶部，下面是版式
 src/activitymap-entry.tsx   活动地图页挂载入口
-src/activitymap.tsx         活动地图页（骨架：地图待接入）
+src/activitymap.tsx         活动地图页
 src/activitymap.css         活动地图页样式
+src/guestbook-entry.tsx     留言板页挂载入口
+src/guestbook/Form.tsx      主站留言框（提交 / 状态）
+src/guestbook/List.tsx      留言板列表页
+src/guestbook/api.ts        留言接口客户端（主站与留言板共用）
+src/guestbook.css           留言框 + 留言板样式
+schema.sql                  留言表结构（D1）
 src/components/Todo.tsx     占位标记 <Todo>
 src/index.css               全部样式：配色变量在最上面
 public/                     原样拷进 dist：favicon、_headers、robots.txt、sitemap.xml、404.html
-worker/index.ts             Worker 入口：www 跳主域 + 子域分流 + 交给静态资源
+worker/index.ts             Worker 入口：www 跳主域 + 子域分流 + 留言接口 + 静态资源
 dist/                       构建产物，自动生成，不要手改
 ```
 
-三个主机名共用同一个 Worker：`intowild.online`（主站）、`www.intowild.online`（301 到主域）、`activitymap.intowild.online`（地图页）。
+四个主机名共用同一个 Worker：`intowild.online`（主站）、`www.intowild.online`（301 到主域）、`activitymap.intowild.online`（地图页）、`guestbook.intowild.online`（留言板）。
 
 ## 常见修改对照
 
@@ -44,7 +51,23 @@ dist/                       构建产物，自动生成，不要手改
 | 浏览器标签标题、分享卡片 | `index.html` / `activitymap.html` 的 `<title>` / `og:` |
 | 右下角「活动地图」按钮 | `src/App.tsx` 底部的 `<a className="fab">`，样式在 `src/index.css` 的 `.fab` |
 | 活动地图页内容 | `src/activitymap.tsx`（接入地图时替换 `.map-blank` 那块） |
+| 留言框 / 留言板 | `src/guestbook/`；接口在 `worker/index.ts` 的 `handleMessagesApi` |
 | 404 页 | `public/404.html`（纯静态，不走 React） |
+
+## 留言板
+
+一条留言 = D1 里的一行，只追加、不合并。接口在两个主机名上都挂了一份：
+
+```
+POST /api/messages   { body, name?, clientId }  → 201 / 200(重复) / 400 / 429 / 503
+GET  /api/messages?limit=20&before=<cursor>     → { items, nextCursor }
+```
+
+- 建库：`wrangler d1 create intowild-guestbook`
+- 建表：`wrangler d1 execute intowild-guestbook --file=./schema.sql --remote`
+- 紧急停写：把 `wrangler.jsonc` 的 `GUESTBOOK_OPEN` 改成 `"false"` 再部署
+- 隐藏一条：`wrangler d1 execute intowild-guestbook --remote --command "UPDATE messages SET status='hidden' WHERE id='…'"`
+- 看全部：`wrangler d1 execute intowild-guestbook --remote --command "SELECT * FROM messages ORDER BY created_at DESC LIMIT 20"`
 
 ## 占位怎么填
 

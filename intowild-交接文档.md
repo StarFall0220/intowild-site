@@ -16,6 +16,7 @@
 | 代码仓库 | `git@github.com:StarFall0220/intowild-site.git`，分支 `main` |
 | 线上地址 | `https://intowild.online`（`www.intowild.online` 301 跳主域） |
 | 测试地址 | `https://intowild-site.2858367707.workers.dev`（`workers_dev: true`，每次部署都更新） |
+| 留言板 | `https://guestbook.intowild.online`（页面 + `/api/messages`，数据在 D1 `intowild-guestbook`） |
 | 子域名 | `https://activitymap.intowild.online`（活动地图页，同一个 Worker 按 hostname 分流） |
 
 部署参数：构建命令 `npm run build`，部署命令 `npx wrangler deploy`，静态产物目录 `./dist`（由 `wrangler.jsonc` 的 `assets.directory` 指定）。
