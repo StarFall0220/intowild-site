@@ -59,9 +59,15 @@ dist/                       构建产物，自动生成，不要手改
 一条留言 = D1 里的一行，只追加、不合并。接口在两个主机名上都挂了一份：
 
 ```
-POST /api/messages   { body, name?, clientId }  → 201 / 200(重复) / 400 / 429 / 503
-GET  /api/messages?limit=20&before=<cursor>     → { items, nextCursor }
+POST   /api/messages        { body, name?, clientId }  → 201 / 200(重复) / 400 / 429 / 503
+GET    /api/messages?limit=20&before=<cursor>          → { items, nextCursor }
+DELETE /api/messages/:id    Authorization: Bearer <管理员密钥>  → 200 / 401 / 404
+GET    /api/admin/verify    Authorization: Bearer <管理员密钥>  → 200 / 401
 ```
+
+- 删除留言：打开留言板 → 点右上角「管理」→ 输入管理员密钥（`wrangler secret put GUESTBOOK_ADMIN_TOKEN` 设置）→ 每条右侧出现 ×
+- 换密钥：`wrangler secret put GUESTBOOK_ADMIN_TOKEN`（旧密钥立即失效）
+- 管理员密钥存在浏览器 localStorage（`iw-gb-admin`），点「退出管理」清除
 
 - 建库：`wrangler d1 create intowild-guestbook`
 - 建表：`wrangler d1 execute intowild-guestbook --file=./schema.sql --remote`

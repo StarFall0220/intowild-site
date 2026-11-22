@@ -48,6 +48,8 @@ interface Env {
   GUESTBOOK_OPEN?: string
   /** 可选：给 IP 哈希加的盐，`wrangler secret put GUESTBOOK_SALT` 设置更稳妥 */
   GUESTBOOK_SALT?: string
+  /** 管理员密钥：`wrangler secret put GUESTBOOK_ADMIN_TOKEN`，用于删除留言 */
+  GUESTBOOK_ADMIN_TOKEN?: string
 }
 
 interface MessageRow {
@@ -234,6 +236,43 @@ async function handleMessagesApi(request: Request, env: Env): Promise<Response> 
   return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405, { allow: 'GET, POST' })
 }
 
+/* ---------------- 管理员：删除 ---------------- */
+
+/** 定时比较，避免按字符提前返回泄露前缀信息 */
+async function isAdmin(request: Request, env: Env): Promise<boolean> {
+  const expected = env.GUESTBOOK_ADMIN_TOKEN
+  if (!expected) return false
+  const header = request.headers.get('authorization') ?? ''
+  if (!header.startsWith('Bearer ')) return false
+  const token = header.slice(7).trim()
+  if (!token) return false
+  const [a, b] = await Promise.all([sha256Hex(token), sha256Hex(expected)])
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
+async function deleteMessage(request: Request, env: Env, id: string): Promise<Response> {
+  if (!env.GUESTBOOK_ADMIN_TOKEN) {
+    return json({ ok: false, error: 'ADMIN_DISABLED' }, 503)
+  }
+  if (!(await isAdmin(request, env))) {
+    return json({ ok: false, error: 'UNAUTHORIZED' }, 401)
+  }
+  if (!id || id.length > 64) return json({ ok: false, error: 'BAD_ID' }, 400)
+
+  const res = await env.DB.prepare(`DELETE FROM messages WHERE id = ?1`).bind(id).run()
+  const changed = res.meta?.changes ?? 0
+  if (!changed) return json({ ok: false, error: 'NOT_FOUND' }, 404)
+  return json({ ok: true, deleted: id })
+}
+
+async function verifyAdmin(request: Request, env: Env): Promise<Response> {
+  if (!env.GUESTBOOK_ADMIN_TOKEN) return json({ ok: false, error: 'ADMIN_DISABLED' }, 503)
+  if (!(await isAdmin(request, env))) return json({ ok: false, error: 'UNAUTHORIZED' }, 401)
+  return json({ ok: true })
+}
+
 /* ---------------- 入口 ---------------- */
 
 export default {
@@ -247,8 +286,21 @@ export default {
     }
 
     // 留言接口：主域（表单同源）与留言子域共用同一套实现
-    if (url.pathname === API_PATH && (url.hostname === APEX || url.hostname === GUESTBOOK_HOST)) {
-      return handleMessagesApi(request, env)
+    const onGuestbookApi = url.hostname === APEX || url.hostname === GUESTBOOK_HOST
+    if (onGuestbookApi) {
+      if (url.pathname === '/api/admin/verify' && request.method === 'GET') {
+        return verifyAdmin(request, env)
+      }
+      if (url.pathname.startsWith(`${API_PATH}/`)) {
+        if (request.method !== 'DELETE') {
+          return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405, { allow: 'DELETE' })
+        }
+        const id = decodeURIComponent(url.pathname.slice(API_PATH.length + 1))
+        return deleteMessage(request, env, id)
+      }
+      if (url.pathname === API_PATH) {
+        return handleMessagesApi(request, env)
+      }
     }
 
     // 子域名根路径 → 对应静态页；其余路径仍按静态资源走（css/js 才能正常加载）

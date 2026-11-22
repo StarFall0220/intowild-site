@@ -91,3 +91,60 @@ export const errorText = (e: CreateError | undefined): string => {
       return '没发出去，稍后再试'
   }
 }
+
+/* ---------------- 管理员（删除留言） ---------------- */
+
+const ADMIN_KEY = 'iw-gb-admin'
+
+export function getAdminToken(): string {
+  try {
+    return localStorage.getItem(ADMIN_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+export function setAdminToken(token: string): void {
+  try {
+    localStorage.setItem(ADMIN_KEY, token)
+  } catch {
+    /* 隐私模式下写不了，本次会话仍可用 */
+  }
+}
+
+export function clearAdminToken(): void {
+  try {
+    localStorage.removeItem(ADMIN_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** 校验密钥，避免输错了才在删除时才发现 */
+export async function verifyAdmin(token: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/admin/verify', {
+      headers: { authorization: `Bearer ${token}` },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+export type DeleteResult = 'ok' | 'unauthorized' | 'notfound' | 'failed'
+
+export async function deleteMessage(id: string, token: string): Promise<DeleteResult> {
+  try {
+    const res = await fetch(`/api/messages/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { authorization: `Bearer ${token}` },
+    })
+    if (res.ok) return 'ok'
+    if (res.status === 401) return 'unauthorized'
+    if (res.status === 404) return 'notfound'
+    return 'failed'
+  } catch {
+    return 'failed'
+  }
+}
