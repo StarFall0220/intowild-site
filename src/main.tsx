@@ -1,10 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import { applyRandomHero } from './hero'
+import { initTheme } from './theme'
 
-// 刷新即换主题：在首次渲染前定好背景，避免先闪默认图
-applyRandomHero()
+// 首帧前定好日间/夜间与背景图，避免闪一下默认配色
+initTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Todo } from './components/Todo'
+import { ThemeToggle } from './components/ThemeToggle'
 import { GuestbookForm } from './guestbook/Form'
 import './index.css'
 import './guestbook.css'
@@ -30,7 +31,10 @@ export default function App() {
           <i className="mark" aria-hidden="true" />
           {SITE.en}
         </span>
-        <span className="host">intowild.online</span>
+        <span className="bar-right">
+          <span className="host">intowild.online</span>
+          <ThemeToggle />
+        </span>
       </header>
 
       <section className="stage">
