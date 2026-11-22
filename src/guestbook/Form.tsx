@@ -45,7 +45,7 @@ export function GuestbookForm() {
           className="gb-input"
           rows={3}
           maxLength={MAX_BODY + 40}
-          placeholder="路过的话，留一句。"
+          placeholder="哈喽！欢迎来到Into Wild户外社留言板，在这里畅所欲言出你的活动想法与活动形式哇"
           value={body}
           disabled={sending}
           onChange={(e) => {
